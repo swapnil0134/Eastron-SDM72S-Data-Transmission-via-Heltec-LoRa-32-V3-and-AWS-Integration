@@ -198,11 +198,19 @@ void loop() {
   if (currentTime - lastTransmissionTime >= 10000 || lastTransmissionTime == 0) {
     // Create payload for the current message
     String payload = "";
+    payload.reserve(80); // Pre-allocate memory
+    bool firstParam = true;
     for (int i = 0; i < 3; i++) {
       int paramIndex = messageIndex * 3 + i;
       if (paramIndex < 17) {
-        payload += "P" + String(paramIndex + 1) + ":" + String(params[paramIndex], 2);
-        if (i < 2) payload += ",";
+        if (!firstParam) {
+          payload += ','; // Append comma if not the first parameter
+        }
+        payload += 'P';
+        payload += (paramIndex + 1);
+        payload += ':';
+        payload += String(params[paramIndex], 2); // Append float with 2 decimal places
+        firstParam = false;
       }
     }
 
