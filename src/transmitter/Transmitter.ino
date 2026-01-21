@@ -166,6 +166,7 @@ void setup() {
 void loop() {
   static int messageIndex = 0;
   static unsigned long lastTransmissionTime = 0;
+  static unsigned long sendingDelayStartTime = 0;
   unsigned long currentTime = millis();
 
   // Read all 17 parameters
@@ -196,43 +197,51 @@ void loop() {
 
 
   if (currentTime - lastTransmissionTime >= 10000 || lastTransmissionTime == 0) {
-    // Create payload for the current message
-    String payload = "";
-    payload.reserve(80); // Pre-allocate memory
-    bool firstParam = true;
-    for (int i = 0; i < 3; i++) {
-      int paramIndex = messageIndex * 3 + i;
-      if (paramIndex < 17) {
-        if (!firstParam) {
-          payload += ','; // Append comma if not the first parameter
+    if (sendingDelayStartTime == 0) {
+      // Create payload for the current message
+      String payload = "";
+      payload.reserve(80); // Pre-allocate memory
+      bool firstParam = true;
+      for (int i = 0; i < 3; i++) {
+        int paramIndex = messageIndex * 3 + i;
+        if (paramIndex < 17) {
+          if (!firstParam) {
+            payload += ','; // Append comma if not the first parameter
+          }
+          payload += 'P';
+          payload += (paramIndex + 1);
+          payload += ':';
+          payload += String(params[paramIndex], 2); // Append float with 2 decimal places
+          firstParam = false;
         }
-        payload += 'P';
-        payload += (paramIndex + 1);
-        payload += ':';
-        payload += String(params[paramIndex], 2); // Append float with 2 decimal places
-        firstParam = false;
       }
+
+      Serial.println("Sending payload: " + payload);
+      payload.toCharArray(txpacket, BUFFER_SIZE);
+
+      // Display the payload on the OLED
+      factory_display.clear();
+      factory_display.drawString(0, 0, "Smart Manufacturing");
+      factory_display.drawString(0, 10, "Data Hub");
+      factory_display.drawString(0, 40, "Sending:");
+      factory_display.drawString(0, 50, payload);
+      factory_display.display();
+
+      sendingDelayStartTime = millis();
+      if (sendingDelayStartTime == 0) sendingDelayStartTime = 1;
     }
 
-    Serial.println("Sending payload: " + payload);
-    payload.toCharArray(txpacket, BUFFER_SIZE);
+    if (millis() - sendingDelayStartTime >= 1000) {
+      factory_display.clear();
 
-    // Display the payload on the OLED
-    factory_display.clear();
-    factory_display.drawString(0, 0, "Smart Manufacturing");
-    factory_display.drawString(0, 10, "Data Hub");
-    factory_display.drawString(0, 40, "Sending:");
-    factory_display.drawString(0, 50, payload);
-    factory_display.display();
-    delay(1000);
-    factory_display.clear();
-    
-    txNumber++;
-    Serial.printf("\r\nsending packet \"%s\" , length %d\r\n", txpacket, strlen(txpacket));
-    Radio.Send((uint8_t *)txpacket, strlen(txpacket));
-    state = LOWPOWER;
-    lastTransmissionTime = currentTime;
-    messageIndex = (messageIndex + 1) % 6; // Increment message index
+      txNumber++;
+      Serial.printf("\r\nsending packet \"%s\" , length %d\r\n", txpacket, strlen(txpacket));
+      Radio.Send((uint8_t *)txpacket, strlen(txpacket));
+      state = LOWPOWER;
+      lastTransmissionTime = currentTime;
+      messageIndex = (messageIndex + 1) % 6; // Increment message index
+      sendingDelayStartTime = 0;
+    }
   }
 
   switch(state) {
