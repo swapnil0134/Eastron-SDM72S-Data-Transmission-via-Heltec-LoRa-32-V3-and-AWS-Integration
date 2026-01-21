@@ -34,6 +34,7 @@ int16_t Rssi, rxSize;
 
 bool receiveflag = false; // software flag for LoRa receiver, received data makes it true.
 int16_t rxNumber = 0; // counter for the number of messages received
+unsigned long previousMillis = 0; // Timestamp of the last display update
 
 void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
@@ -122,24 +123,30 @@ void setup()
   oledDisplay.display();
   delay(100);
   oledDisplay.clear();
+  // Initialize previousMillis to ensure the first message is displayed immediately
+  previousMillis = millis() - 1000;
 }
 
 void loop()
 {
   if (receiveflag && (state == LOWPOWER))
   {
-    receiveflag = false;
-    char packet[128], packSize[128], numMessages[128];
-    snprintf(packet, sizeof(packet), "R_data: %s", rxpacket);
-    snprintf(packSize, sizeof(packSize), "R_Size: %d R_rssi: %d", rxSize, Rssi);
-    snprintf(numMessages, sizeof(numMessages), "Messages: %d", rxNumber);
+    if (millis() - previousMillis >= 1000)
+    {
+      receiveflag = false;
+      char packet[128], packSize[128], numMessages[128];
+      snprintf(packet, sizeof(packet), "R_data: %s", rxpacket);
+      snprintf(packSize, sizeof(packSize), "R_Size: %d R_rssi: %d", rxSize, Rssi);
+      snprintf(numMessages, sizeof(numMessages), "Messages: %d", rxNumber);
 
-    oledDisplay.drawString(0, 20, packet);
-    oledDisplay.drawString(0, 40, packSize);
-    oledDisplay.drawString(0, 50, numMessages);
-    oledDisplay.display();
-    delay(1000);
-    oledDisplay.clear();
+      oledDisplay.drawString(0, 20, packet);
+      oledDisplay.drawString(0, 40, packSize);
+      oledDisplay.drawString(0, 50, numMessages);
+      oledDisplay.display();
+
+      previousMillis = millis();
+      oledDisplay.clear();
+    }
   }
 
   switch (state)
