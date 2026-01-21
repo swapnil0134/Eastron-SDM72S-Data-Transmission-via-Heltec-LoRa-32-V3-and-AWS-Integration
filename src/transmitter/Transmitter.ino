@@ -49,6 +49,31 @@ float getRTU(uint16_t m_startAddress) {
   return value;
 }
 
+void readModbusBlock(uint16_t startAddress, uint8_t numRegisters, int paramStartIndex) {
+  uint16_t result;
+
+  node.preTransmission(preTransmission);
+  node.postTransmission(postTransmission);
+  result = node.readInputRegisters(startAddress, numRegisters);
+
+  if (result == node.ku8MBSuccess) {
+    for (int i = 0; i < numRegisters / 2; i++) {
+        if (paramStartIndex + i < 17) {
+            params[paramStartIndex + i] = reform_uint16_2_float32(
+                node.getResponseBuffer(i * 2),
+                node.getResponseBuffer(i * 2 + 1)
+            );
+        }
+    }
+  } else {
+    for (int i = 0; i < numRegisters / 2; i++) {
+        if (paramStartIndex + i < 17) {
+            params[paramStartIndex + i] = 0.0;
+        }
+    }
+  }
+}
+
 /********************************* Modbus  *********************************************/
 
 /********************************* LoRa  *********************************************/
@@ -170,25 +195,14 @@ void loop() {
 
   // Read all 17 parameters
 
-  params[0] = getRTU(0x0000);   // Phase 1 line to neutral volts
-  params[1] = getRTU(0x0002);   // Phase 2 line to neutral volts
-  params[2] = getRTU(0x0004);   // Phase 3 line to neutral volts
+  // Block 1: 0x0000 to 0x0011 (18 registers) -> params[0] to params[8]
+  readModbusBlock(0x0000, 18, 0);
 
-  params[3] = getRTU(0x0006);   // Phase 1 current
-  params[4] = getRTU(0x0008);   // Phase 2 current
-  params[5] = getRTU(0x000A);   // Phase 3 current
+  // Block 2: 0x001E to 0x0023 (6 registers) -> params[9] to params[11]
+  readModbusBlock(0x001E, 6, 9);
 
-  params[6] = getRTU(0x000C);   // Phase 1 reactive power
-  params[7] = getRTU(0x000E);   // Phase 2 reactive power
-  params[8] = getRTU(0x0010);   // Phase 3 reactive power
-  
-  params[9] = getRTU(0x001E);  // Phase 1 power factor
-  params[10] = getRTU(0x0020);  // Phase 2 power factor
-  params[11] = getRTU(0x0022);  // Phase 3 power factor
-  
-  params[12] = getRTU(0x00C8);  // Line 1 to Line 2 volts
-  params[13] = getRTU(0x00CA);  // Line 2 to Line 3 volts
-  params[14] = getRTU(0x00CC);  // Line 3 to Line 1 volts
+  // Block 3: 0x00C8 to 0x00CD (6 registers) -> params[12] to params[14]
+  readModbusBlock(0x00C8, 6, 12);
   
   params[15] = getRTU(0x00E0);  // Neutral current
   params[16] = getRTU(0x0046);  // Frequency of supply voltages
