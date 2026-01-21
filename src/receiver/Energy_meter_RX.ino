@@ -129,9 +129,10 @@ void loop()
   if (receiveflag && (state == LOWPOWER))
   {
     receiveflag = false;
-    String packet = "R_data: " + String(rxpacket);
-    String packSize = "R_Size: " + String(rxSize, DEC) + " R_rssi: " + String(Rssi, DEC);
-    String numMessages = "Messages: " + String(rxNumber, DEC);
+    char packet[128], packSize[128], numMessages[128];
+    snprintf(packet, sizeof(packet), "R_data: %s", rxpacket);
+    snprintf(packSize, sizeof(packSize), "R_Size: %d R_rssi: %d", rxSize, Rssi);
+    snprintf(numMessages, sizeof(numMessages), "Messages: %d", rxNumber);
 
     oledDisplay.drawString(0, 20, packet);
     oledDisplay.drawString(0, 40, packSize);
