@@ -197,25 +197,26 @@ void loop() {
 
   if (currentTime - lastTransmissionTime >= 10000 || lastTransmissionTime == 0) {
     // Create payload for the current message
-    String payload = "";
-    payload.reserve(80); // Pre-allocate memory
+    char payload[80];
+    int offset = 0;
     bool firstParam = true;
     for (int i = 0; i < 3; i++) {
       int paramIndex = messageIndex * 3 + i;
       if (paramIndex < 17) {
         if (!firstParam) {
-          payload += ','; // Append comma if not the first parameter
+          offset += snprintf(payload + offset, sizeof(payload) - offset, ",");
         }
-        payload += 'P';
-        payload += (paramIndex + 1);
-        payload += ':';
-        payload += String(params[paramIndex], 2); // Append float with 2 decimal places
+        int written = snprintf(payload + offset, sizeof(payload) - offset, "P%d:%.2f", paramIndex + 1, params[paramIndex]);
+        if (written > 0) {
+          offset += written;
+        }
         firstParam = false;
       }
     }
 
-    Serial.println("Sending payload: " + payload);
-    payload.toCharArray(txpacket, BUFFER_SIZE);
+    Serial.print("Sending payload: ");
+    Serial.println(payload);
+    strncpy(txpacket, payload, BUFFER_SIZE);
 
     // Display the payload on the OLED
     factory_display.clear();
