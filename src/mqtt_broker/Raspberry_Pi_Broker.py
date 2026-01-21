@@ -130,7 +130,6 @@ try:
                 
                 # Write log_data (modified for readability) to the log file with timestamp
                 log_file.write(f"{timestamp} {log_data}\n")
-                log_file.flush()  # ensure data is written immediately
 
                 # Check if 'P17' is in the received data
                 if 'P17' in lora_data:
