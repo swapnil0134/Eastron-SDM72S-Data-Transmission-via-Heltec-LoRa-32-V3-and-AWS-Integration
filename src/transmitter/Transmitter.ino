@@ -168,34 +168,31 @@ void loop() {
   static unsigned long lastTransmissionTime = 0;
   unsigned long currentTime = millis();
 
-  // Read all 17 parameters
-
-  params[0] = getRTU(0x0000);   // Phase 1 line to neutral volts
-  params[1] = getRTU(0x0002);   // Phase 2 line to neutral volts
-  params[2] = getRTU(0x0004);   // Phase 3 line to neutral volts
-
-  params[3] = getRTU(0x0006);   // Phase 1 current
-  params[4] = getRTU(0x0008);   // Phase 2 current
-  params[5] = getRTU(0x000A);   // Phase 3 current
-
-  params[6] = getRTU(0x000C);   // Phase 1 reactive power
-  params[7] = getRTU(0x000E);   // Phase 2 reactive power
-  params[8] = getRTU(0x0010);   // Phase 3 reactive power
-  
-  params[9] = getRTU(0x001E);  // Phase 1 power factor
-  params[10] = getRTU(0x0020);  // Phase 2 power factor
-  params[11] = getRTU(0x0022);  // Phase 3 power factor
-  
-  params[12] = getRTU(0x00C8);  // Line 1 to Line 2 volts
-  params[13] = getRTU(0x00CA);  // Line 2 to Line 3 volts
-  params[14] = getRTU(0x00CC);  // Line 3 to Line 1 volts
-  
-  params[15] = getRTU(0x00E0);  // Neutral current
-  params[16] = getRTU(0x0046);  // Frequency of supply voltages
-  
-
-
   if (currentTime - lastTransmissionTime >= 10000 || lastTransmissionTime == 0) {
+    // Read all 17 parameters
+    params[0] = getRTU(0x0000);   // Phase 1 line to neutral volts
+    params[1] = getRTU(0x0002);   // Phase 2 line to neutral volts
+    params[2] = getRTU(0x0004);   // Phase 3 line to neutral volts
+
+    params[3] = getRTU(0x0006);   // Phase 1 current
+    params[4] = getRTU(0x0008);   // Phase 2 current
+    params[5] = getRTU(0x000A);   // Phase 3 current
+
+    params[6] = getRTU(0x000C);   // Phase 1 reactive power
+    params[7] = getRTU(0x000E);   // Phase 2 reactive power
+    params[8] = getRTU(0x0010);   // Phase 3 reactive power
+
+    params[9] = getRTU(0x001E);  // Phase 1 power factor
+    params[10] = getRTU(0x0020);  // Phase 2 power factor
+    params[11] = getRTU(0x0022);  // Phase 3 power factor
+
+    params[12] = getRTU(0x00C8);  // Line 1 to Line 2 volts
+    params[13] = getRTU(0x00CA);  // Line 2 to Line 3 volts
+    params[14] = getRTU(0x00CC);  // Line 3 to Line 1 volts
+
+    params[15] = getRTU(0x00E0);  // Neutral current
+    params[16] = getRTU(0x0046);  // Frequency of supply voltages
+
     // Create payload for the current message
     String payload = "";
     payload.reserve(80); // Pre-allocate memory
