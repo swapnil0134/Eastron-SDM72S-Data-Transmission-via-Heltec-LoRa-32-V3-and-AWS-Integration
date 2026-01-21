@@ -82,6 +82,15 @@ def on_connection_resumed(connection, return_code, session_present, **kwargs):
 def on_publish(topic, payload, **kwargs):
     print(f"Published to topic {topic}: {payload}")
 
+def make_publish_callback(payload_str):
+    def callback(future):
+        try:
+            future.result()  # This will raise an exception if the publish failed
+            print(f"Published to AWS IoT: {payload_str}")
+        except Exception as e:
+            print(f"Publish failed: {e}")
+    return callback
+
 # Add connection callbacks
 mqtt_connection.on_interrupted = on_connection_interrupted
 mqtt_connection.on_resumed = on_connection_resumed
@@ -156,15 +165,15 @@ try:
                                     json_data[description] = value
                     
                     # Publish the JSON data to AWS IoT
+                    payload_str = json.dumps(json_data)
                     publish_future, _ = mqtt_connection.publish(
                         topic=aws_publish_topic,
-                        payload=json.dumps(json_data),
+                        payload=payload_str,
                         qos=mqtt.QoS.AT_LEAST_ONCE
                     )
 
-                    # Wait for publish to complete
-                    publish_future.result()
-                    print(f"Published to AWS IoT: {json.dumps(json_data)}")
+                    # Add callback to handle result asynchronously
+                    publish_future.add_done_callback(make_publish_callback(payload_str))
                     
                     # Clear the buffer after publishing
                     data_buffer.clear()
