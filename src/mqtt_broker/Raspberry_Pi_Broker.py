@@ -3,6 +3,7 @@
 import serial
 from datetime import datetime
 import json
+import re
 from awscrt import io, mqtt, auth, http
 from awsiot import mqtt_connection_builder
 
@@ -37,6 +38,11 @@ keyword_map_save = {
     "P16": "Neutral current",
     "P17": "Frequency"
 }
+
+# Pre-compile regex for optimized replacement
+keyword_map_save_colon = {f"{k}:": f"{v}:" for k, v in keyword_map_save.items()}
+sorted_keys_save_colon = sorted(keyword_map_save_colon.keys(), key=len, reverse=True)
+keyword_save_pattern = re.compile(r'(' + '|'.join(re.escape(k) for k in sorted_keys_save_colon) + r')')
 
 # Mapping of keywords to descriptions for data publishing
 keyword_map_publish = {
@@ -119,8 +125,7 @@ try:
                 log_data = lora_data
 
                 # Replace exact keywords with descriptions for logging
-                for keyword, description in keyword_map_save.items():
-                    log_data = log_data.replace(f"{keyword}:", f"{description}:")
+                log_data = keyword_save_pattern.sub(lambda m: keyword_map_save_colon[m.group(0)], log_data)
 
                 # Get the current date and time
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
